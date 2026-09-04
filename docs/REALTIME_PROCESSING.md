@@ -62,6 +62,8 @@ Default:
 100ms
 ```
 
+Incoming ticker and order-book updates replace the in-memory latest state immediately. A timer then publishes a cloned snapshot of complete pairs. If nothing changed since the last publish, the interval is skipped so idle state is not rebroadcast.
+
 Therefore the maximum intended broadcast frequency is approximately:
 
 ```text

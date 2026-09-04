@@ -241,4 +241,24 @@ The full ticker includes `P` (24h percent change) and `q` (quote volume). Mini-t
 
 ### Trade-off
 
-Ticker updates at 1000ms, while depth updates at 100ms. The processor (next phase) still publishes a combined snapshot on the configured interval, so the UI does not inherit two cadences.
+Ticker updates at 1000ms, while depth updates at 100ms. The processor still publishes a combined snapshot on the configured interval, so the UI does not inherit two cadences.
+
+---
+
+# ADR-015: In-Process Snapshot Sink
+
+### Decision
+
+The market processor publishes `MarketState[]` through a `MarketSnapshotSink` interface. The current implementation is a no-op. The WebSocket gateway (Phase 5) will replace that sink.
+
+### Reason
+
+The processor must be testable without Binance or client sockets. Putting broadcast in the processor would couple latest-state batching to transport.
+
+### Trade-off
+
+One extra interface for a single downstream consumer. That is cheaper than embedding WebSocket details in processing.
+
+### Snapshot contents
+
+A pair is included only after a ticker has supplied `lastPrice` and 24h statistics. An order-book update that arrives first is retained internally and merged when the ticker appears. Spread and pressure stay null until both sides of the bounded book are usable.
