@@ -18,6 +18,8 @@ External APIs
 
 # WebSocket
 
+Networking lives in `apps/mobile/src/networking`. REST (`GET /pairs/meta`) and the WebSocket service have independent lifecycles. Pull-to-refresh must not restart the socket.
+
 The WebSocket service is responsible for:
 
 - Connection
