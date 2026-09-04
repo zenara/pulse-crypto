@@ -1,0 +1,601 @@
+---
+
+description: Engineering rules for the PulseCrypto real-time cryptocurrency market viewer
+alwaysApply: true
+-----------------
+
+# PulseCrypto Engineering Rules
+
+## Project Context
+
+PulseCrypto is a Staff Engineer / Architect-level practical assignment.
+
+The system consists of:
+
+1. A Node.js + TypeScript backend.
+2. A React Native mobile application.
+3. Binance public market WebSocket feeds.
+4. A backend WebSocket gateway consumed by the mobile application.
+5. A REST API for trading-pair metadata.
+
+The primary engineering goals are:
+
+* Real-time data processing
+* Mobile performance
+* Maintainability
+* Resilience
+* Clean architecture
+* Efficient state management
+* Bounded memory usage
+* Clear separation of concerns
+
+The assignment evaluates architectural reasoning as much as functionality.
+
+---
+
+# Core Engineering Principles
+
+## 1. Prefer Simple, Explicit Architecture
+
+Do not introduce abstractions, infrastructure, patterns, or dependencies unless they solve a demonstrated problem.
+
+Avoid unnecessary:
+
+* Microservices
+* Kafka
+* Redis
+* RabbitMQ
+* Databases
+* CQRS
+* Event sourcing
+* Dependency-heavy frameworks
+* Complex state-management abstractions
+
+The application is intentionally small.
+
+Prefer a simple architecture that can scale conceptually without unnecessary operational complexity.
+
+---
+
+# 2. Separation of Concerns
+
+Keep these responsibilities separate:
+
+```text
+Binance Feed
+    ↓
+Market Processing
+    ↓
+WebSocket Gateway
+    ↓
+Mobile WebSocket Service
+    ↓
+Market Store
+    ↓
+UI
+```
+
+Backend responsibilities:
+
+* Binance connectivity
+* Binance message parsing
+* Market-state processing
+* Order-book processing
+* Market calculations
+* Update batching
+* Client broadcasting
+
+Mobile responsibilities:
+
+* WebSocket lifecycle
+* REST API communication
+* Client-side state
+* Favourite persistence
+* Search/filtering
+* Rendering
+* User interactions
+
+UI components must not directly own networking infrastructure.
+
+---
+
+# 3. Backend Architecture
+
+The backend should be organized around clear responsibilities rather than technical layers alone.
+
+Preferred conceptual structure:
+
+```text
+market/
+├── domain/
+├── feed/
+├── processing/
+├── gateway/
+└── api/
+```
+
+The Binance feed must not know about mobile clients.
+
+The WebSocket gateway must not know about Binance-specific payload formats.
+
+Normalize external Binance data into internal domain models before exposing it to other layers.
+
+Never expose Binance-specific message structures directly to the mobile application.
+
+---
+
+# 4. Real-Time Processing
+
+Binance updates may arrive many times per second.
+
+Do NOT forward every upstream event directly to mobile clients.
+
+Use latest-state semantics.
+
+Maintain the latest market state for each supported trading pair.
+
+Conceptually:
+
+```text
+Map<TradingPair, MarketState>
+```
+
+Incoming updates replace the latest state.
+
+Publish consolidated snapshots at a configurable interval.
+
+Default:
+
+```text
+100ms
+```
+
+The interval must be configurable.
+
+Example:
+
+```text
+MARKET_UPDATE_INTERVAL_MS=100
+```
+
+The application is a market viewer, not an event-replay system.
+
+Intermediate states may be discarded.
+
+This is intentional.
+
+---
+
+# 5. Memory Safety / Slow Consumers
+
+Never create unbounded queues.
+
+Avoid designs where each client accumulates:
+
+```text
+update 1
+update 2
+update 3
+update 4
+...
+```
+
+Instead, prefer latest-state semantics.
+
+If a client cannot consume updates quickly enough, older snapshots may be discarded in favor of the latest snapshot.
+
+The system must remain bounded in memory.
+
+A slow mobile client must not degrade the entire backend.
+
+---
+
+# 6. Order Book
+
+The UI does not require the complete Binance order book.
+
+Maintain only the bounded number of levels required by the application.
+
+Default:
+
+```text
+10 bids
+10 asks
+```
+
+Make this configurable where reasonable.
+
+Do not introduce a complex order-book engine unless the implementation genuinely requires it.
+
+Document assumptions around order-book accuracy in `docs/DECISIONS.md`.
+
+---
+
+# 7. Domain Models
+
+Use explicit TypeScript types/interfaces.
+
+Important domain concepts include:
+
+* TradingPair
+* OrderBookLevel
+* MarketState
+* PairMetadata
+* ConnectionStatus
+* MarketSnapshot
+
+Do not use `any` unless there is a strong reason.
+
+External API/WebSocket payloads should be validated or safely normalized before entering the domain layer.
+
+---
+
+# 8. WebSocket Protocol
+
+The backend-to-mobile protocol must be explicitly defined.
+
+Do not send arbitrary objects.
+
+Every message should have a clear message type.
+
+Example:
+
+```json
+{
+  "type": "market.snapshot",
+  "timestamp": 1720802025,
+  "data": []
+}
+```
+
+The protocol must be documented in:
+
+```text
+docs/WEBSOCKET_PROTOCOL.md
+```
+
+Mobile code must depend on the application protocol, not Binance's protocol.
+
+---
+
+# 9. Connection Handling
+
+Backend Binance connections must support:
+
+* Initial connection
+* Connection errors
+* Disconnection
+* Reconnection
+* Bounded exponential backoff
+* Cleanup
+
+Mobile WebSocket connections must support:
+
+* Connecting
+* Connected
+* Disconnected
+* Reconnecting
+* Error
+
+Preferred reconnect strategy:
+
+```text
+1s
+2s
+4s
+8s
+16s
+30s maximum
+```
+
+After a successful connection, reset the retry delay.
+
+Never create multiple simultaneous reconnect loops.
+
+---
+
+# 10. Mobile State Management
+
+Use Zustand for application state.
+
+Keep different types of state separate.
+
+Market/server state:
+
+```text
+MarketStore
+```
+
+User preferences:
+
+```text
+FavoritesStore
+```
+
+Do not mix favourite persistence into the market-data state.
+
+The WebSocket service owns the connection.
+
+The Zustand store owns application state.
+
+Conceptually:
+
+```text
+WebSocketService
+       ↓
+MarketStore
+       ↓
+React Components
+```
+
+---
+
+# 11. React Native Performance
+
+The application receives updates every 100ms.
+
+Assume sustained real-time updates.
+
+Avoid unnecessary whole-screen re-renders.
+
+Use:
+
+* Selective Zustand subscriptions
+* React.memo where useful
+* Stable callbacks where useful
+* Bounded FlatLists
+* Bounded order-book rendering
+* Efficient derived state
+
+Do not optimize blindly.
+
+Do not introduce memoization everywhere without justification.
+
+For small lists, simple rendering may be preferable.
+
+Performance decisions should be documented in:
+
+```text
+docs/PERFORMANCE.md
+```
+
+---
+
+# 12. Offline Behavior
+
+When the WebSocket disconnects:
+
+DO:
+
+```text
+connectionStatus = disconnected
+```
+
+DO NOT:
+
+```text
+clear market state
+```
+
+The UI must continue showing the most recently received market data.
+
+When connectivity returns:
+
+```text
+reconnect
+    ↓
+receive snapshot
+    ↓
+update store
+```
+
+The application should automatically reconnect.
+
+---
+
+# 13. REST and WebSocket Separation
+
+REST is responsible for metadata.
+
+WebSocket is responsible for live market data.
+
+Pull-to-refresh must call:
+
+```text
+GET /pairs/meta
+```
+
+without restarting or interrupting the WebSocket connection.
+
+Do not use REST polling for real-time market updates.
+
+---
+
+# 14. Favourites
+
+Favourite trading pairs must persist across application restarts.
+
+Use AsyncStorage.
+
+Persistence should be isolated behind a small storage abstraction where useful.
+
+Do not store rapidly changing market data in AsyncStorage.
+
+Only persist user preferences.
+
+---
+
+# 15. Error Handling
+
+Errors should be handled at the appropriate boundary.
+
+Do not silently swallow errors.
+
+Do not expose raw Binance errors directly to the UI.
+
+User-facing errors should be meaningful.
+
+Infrastructure errors should contain enough context for debugging.
+
+Avoid excessive logging of every market update.
+
+Never log high-frequency market events individually in production-style code.
+
+---
+
+# 16. Testing
+
+Tests should focus on behavior and important failure scenarios.
+
+Backend tests should cover:
+
+* Market-state updates
+* Batching
+* Multiple trading pairs
+* Spread calculation
+* Buy/sell pressure calculation
+* Order-book limits
+* Binance reconnect behavior
+* WebSocket broadcasting
+* Slow-consumer behavior
+
+Mobile tests should cover:
+
+* Market-store updates
+* Connection state
+* Favourite persistence
+* Search/filtering
+* Watchlist rendering
+* Market details rendering
+* Reconnection behavior where practical
+
+Do not write tests merely to increase coverage numbers.
+
+---
+
+# 17. TypeScript
+
+Prefer strict TypeScript.
+
+Avoid:
+
+```ts
+any
+```
+
+Prefer:
+
+```ts
+unknown
+```
+
+when external data is genuinely unknown.
+
+Use discriminated unions for WebSocket messages where appropriate.
+
+Example:
+
+```ts
+type WebSocketMessage =
+  | MarketSnapshotMessage
+  | ConnectionReadyMessage
+  | ErrorMessage;
+```
+
+---
+
+# 18. Dependencies
+
+Before adding a dependency:
+
+1. Check whether the existing stack already solves the problem.
+2. Determine whether the dependency is justified.
+3. Prefer mature, lightweight libraries.
+4. Avoid dependencies that introduce unnecessary architectural complexity.
+
+Do not add libraries simply because they are popular.
+
+---
+
+# 19. Code Generation Rules
+
+When implementing a feature:
+
+1. Read the relevant documentation in `docs/`.
+2. Understand existing architecture.
+3. Make the smallest reasonable change.
+4. Do not modify unrelated files.
+5. Reuse existing abstractions where appropriate.
+6. Add or update tests.
+7. Run type checking and tests.
+8. Explain important architectural decisions.
+
+Do not rewrite working code unnecessarily.
+
+---
+
+# 20. AI-Assisted Development
+
+AI is being intentionally used as part of the development process.
+
+AI-generated code must still be reviewed by the developer.
+
+When generating code:
+
+* Explain non-obvious decisions.
+* Flag assumptions.
+* Identify potential performance issues.
+* Identify edge cases.
+* Do not claim code is production-ready without validation.
+* Do not fabricate Binance API behavior.
+* Do not invent library APIs.
+
+When uncertain about an external API, check the official documentation before implementing.
+
+---
+
+# 21. Staff Engineer Mindset
+
+Prioritize:
+
+```text
+Correctness
+↓
+Reliability
+↓
+Performance
+↓
+Maintainability
+↓
+Simplicity
+```
+
+Do not optimize for code volume.
+
+Do not optimize for architectural complexity.
+
+Every significant architectural decision should answer:
+
+1. What problem does this solve?
+2. Why is this approach appropriate?
+3. What trade-off does it introduce?
+4. What would change if the system scaled significantly?
+
+---
+
+# 22. Before Completing a Feature
+
+Before considering a feature complete, verify:
+
+* TypeScript passes
+* Tests pass
+* No unnecessary dependencies were introduced
+* Error cases are handled
+* Cleanup is implemented
+* Timers are cleared
+* WebSocket listeners are removed
+* No obvious memory leaks exist
+* No unnecessary React re-renders are introduced
+* Documentation is updated when architecture changes
+
+Do not declare a feature complete based only on compilation.

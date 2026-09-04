@@ -1,0 +1,14 @@
+packages:
+  - 'apps/*'
+  - 'libs/*'
+
+autoInstallPeers: true
+
+allowBuilds:
+  nx: true
+  '@parcel/watcher': true
+  unrs-resolver: true
+  '@nestjs/core': true
+  esbuild: true
+  sharp: true
+  '@swc/core': true

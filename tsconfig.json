@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compileOnSave": false,
+  "files": [],
+  "references": [
+    {
+      "path": "./apps/api"
+    },
+    {
+      "path": "./apps/mobile"
+    },
+    {
+      "path": "./libs/contracts"
+    },
+    {
+      "path": "./libs/market-domain"
+    },
+    {
+      "path": "./libs/shared"
+    }
+  ]
+}
