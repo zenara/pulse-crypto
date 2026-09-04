@@ -1,1 +1,1 @@
-export * from './lib/shared.js';
+export { reconnectDelayMs } from './reconnect.js';

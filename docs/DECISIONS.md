@@ -206,3 +206,39 @@ The mobile client will use the React Native `WebSocket` API and a documented JSO
 ### Trade-off
 
 We do not get Socket.IO rooms, acknowledgements, or automatic fallbacks. Those are not required for snapshot broadcast.
+
+---
+
+# ADR-013: Partial Depth Stream, Not a Local Order Book Engine
+
+### Decision
+
+Subscribe to Binance partial book depth (`<symbol>@depth<N>@100ms`) and treat each event as a replacement snapshot of the top N levels.
+
+### Reason
+
+The UI only needs a bounded book (default 10 bids / 10 asks). Binance already publishes that snapshot. Maintaining a local book from diff events would add snapshot-sync, gap detection, and REST depth seeding without improving the product.
+
+### Trade-off / accuracy
+
+The book is the exchange's top N levels at the stream's 100ms cadence, not a complete or strictly sequential reconstruction of the full order book. Levels beyond N are omitted. Brief gaps during reconnect are acceptable; the next snapshot replaces state.
+
+### Alternative
+
+Diff depth (`@depth@100ms`) plus REST snapshot sync. Rejected as unnecessary complexity for this viewer.
+
+---
+
+# ADR-014: 24h Ticker Stream for Price Statistics
+
+### Decision
+
+Use `<symbol>@ticker` for last price, 24h change percent, high, low, and quote volume.
+
+### Reason
+
+The full ticker includes `P` (24h percent change) and `q` (quote volume). Mini-ticker does not include percent change, which the watchlist needs.
+
+### Trade-off
+
+Ticker updates at 1000ms, while depth updates at 100ms. The processor (next phase) still publishes a combined snapshot on the configured interval, so the UI does not inherit two cadences.
