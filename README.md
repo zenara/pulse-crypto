@@ -37,7 +37,7 @@ copy apps\api\.env.example apps\api\.env
 copy apps\mobile\.env.example apps\mobile\.env
 ```
 
-Do not commit `.env` files. Android emulator should use `10.0.2.2` to reach the host; iOS simulator can use `localhost`. Keep those values in env files, not in application code.
+`apps/mobile/.env` defaults to the Android emulator host (`10.0.2.2`). Restart Metro after changing it. Do not commit `.env` files.
 
 ## Workspace
 
