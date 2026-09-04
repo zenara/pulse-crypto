@@ -15,12 +15,13 @@ import {
   MARKET_PROCESSOR_CONFIG,
   MARKET_SNAPSHOT_SINK,
 } from './processing/market-processor.tokens';
-import { NoopMarketSnapshotSink } from './processing/noop-market-snapshot.sink';
+import { MarketGateway } from './gateway/market.gateway';
 
 /**
- * Composition root for feed + processor.
- * Both providers live here so the feed can inject the processor as its listener
- * without a circular Nest module import.
+ * Composition root for feed, processor, and the mobile WebSocket gateway.
+ * These providers live together so the feed can inject the processor as its
+ * listener, and the processor can inject the gateway as its snapshot sink,
+ * without circular Nest module imports.
  */
 @Module({
   providers: [
@@ -36,9 +37,10 @@ import { NoopMarketSnapshotSink } from './processing/noop-market-snapshot.sink';
       provide: MARKET_PROCESSOR_CONFIG,
       useFactory: () => readMarketProcessorConfig(),
     },
+    MarketGateway,
     {
       provide: MARKET_SNAPSHOT_SINK,
-      useClass: NoopMarketSnapshotSink,
+      useExisting: MarketGateway,
     },
     MarketProcessor,
     {

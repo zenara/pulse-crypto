@@ -249,7 +249,7 @@ Ticker updates at 1000ms, while depth updates at 100ms. The processor still publ
 
 ### Decision
 
-The market processor publishes `MarketState[]` through a `MarketSnapshotSink` interface. The current implementation is a no-op. The WebSocket gateway (Phase 5) will replace that sink.
+The market processor publishes `MarketState[]` through a `MarketSnapshotSink` interface. `MarketGateway` implements that sink and broadcasts to mobile WebSocket clients.
 
 ### Reason
 
@@ -262,3 +262,23 @@ One extra interface for a single downstream consumer. That is cheaper than embed
 ### Snapshot contents
 
 A pair is included only after a ticker has supplied `lastPrice` and 24h statistics. An order-book update that arrives first is retained internally and merged when the ticker appears. Spread and pressure stay null until both sides of the bounded book are usable.
+
+---
+
+# ADR-016: Per-Client Snapshot Coalescing
+
+### Decision
+
+Each connected WebSocket client has at most one in-flight send and one pending encoded snapshot. A newer snapshot overwrites the pending slot.
+
+### Reason
+
+A slow mobile client must not grow an unbounded queue of 100ms snapshots. Latest-state semantics already apply in the processor; the gateway must apply the same bound on the way out.
+
+### Trade-off
+
+A slow client may skip intermediate snapshots. That is acceptable for a market viewer.
+
+### Alternative
+
+Drop sends when `bufferedAmount` is high, without a pending slot. That can lose the latest snapshot until the next processor publish. Coalescing keeps the newest payload.

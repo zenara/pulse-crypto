@@ -68,5 +68,7 @@ Do not include stack traces or Binance-specific details.
 - Native WebSocket, not Socket.IO
 - One JSON object per message
 - Server broadcasts snapshots at `MARKET_UPDATE_INTERVAL_MS` (default 100ms)
+- URL: `ws://<host>:<port>/market` (same HTTP port as REST)
+- A slow client keeps at most one in-flight message and one pending snapshot; older pending snapshots are discarded
 
-Gateway broadcasting is not implemented yet. These types exist so the feed and later processor have a stable contract.
+On connect the server sends `connection.ready`, then the latest snapshot if one has already been published.

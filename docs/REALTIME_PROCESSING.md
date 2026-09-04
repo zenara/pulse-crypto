@@ -103,7 +103,7 @@ Snapshot 3 → discard
 Snapshot 4 → consume
 ```
 
-The exact implementation may vary, but memory growth must remain bounded.
+The gateway implements this with one in-flight send and one pending snapshot per client. Memory growth remains bounded.
 
 ---
 
