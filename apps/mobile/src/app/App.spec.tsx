@@ -32,7 +32,7 @@ beforeEach(() => {
 
 test('renders correctly', () => {
   const { getByTestId, unmount } = render(<App />);
-  expect(getByTestId('heading')).toHaveTextContent(/PulseCrypto/);
+  expect(getByTestId('heading')).toHaveTextContent(/Markets/);
   expect(getByTestId('connection-status')).toBeTruthy();
   unmount();
 });

@@ -164,7 +164,7 @@ Binance → BinanceFeedService → MarketProcessor → MarketGateway
 - `apps/mobile/src/session/market-session.ts` owns REST `GET /pairs/meta` and `MarketWebSocketService`. `refreshMeta()` does not restart the socket.
 - `MarketStore`: `connectionStatus`, `markets` (map by pair, latest-state merge), `pairs` metadata, `metaError`, `protocolError`. Disconnect updates status only; markets are not cleared.
 - `FavoritesStore`: favourite symbols only, hydrated/saved through `FavoritesStorage` (AsyncStorage key `@pulse-crypto/favorites`).
-- `App.tsx` starts/stops `MarketSession` and switches between `WatchlistScreen` and `MarketDetailsScreen` with local `selectedPair` state (no React Navigation). Details subscribe with `selectMarket(pair)`.
+- `App.tsx` starts/stops `MarketSession` and switches Markets / Terminal via local tab + `selectedPair` state (no React Navigation). Visual tokens come from `UI/` PNG exports (`src/theme.ts`). Details subscribe with `selectMarket(pair)`. Pull-to-refresh on Markets calls `refreshMeta()` only.
 
 ---
 
@@ -193,18 +193,19 @@ Kafka, Redis, RabbitMQ, databases, CQRS/event sourcing, Socket.IO, React Navigat
 - **Phase 7:** Zustand `MarketStore` / `FavoritesStore`, AsyncStorage favourites, `MarketSession` as the networking composition root.
 - **Phase 8:** Watchlist with pair rows, price, 24h change, connection indicator, search, and favourite toggle.
 - **Phase 9:** Market details (price, spread, buy/sell pressure, bounded order book, last updated). Watchlist → details via local selected-pair state.
+- **Phase 10 (partial) + visual pass:** Dark PulseCrypto theme from `UI/` PNGs (not Figma MCP — Dev Mode unavailable). Markets/Terminal chrome, order-book depth bars, price tick flash, pull-to-refresh metadata. Telemetry/Settings/account sidebar from the Figma exports were not built — they are not assignment features and would require fake telemetry.
 
 ---
 
 ## 16. Currently in progress
 
-Nothing in-flight. Phase 9 market details are in place. Next planned work is **Phase 10 — UX**.
+Nothing in-flight. Visual restyle from PNG references is in place. Remaining Phase 10 polish: loading placeholders, richer error states, order-book quantity animation.
 
 ---
 
 ## 17. Exact next step
 
-**Phase 10 — UX:** price/volume change animation, loading/error/connection states, pull-to-refresh of `GET /pairs/meta` without restarting the WebSocket.
+**Phase 10 remainder:** loading placeholders and stronger empty/error states. Order-book quantity animation if it stays cheap. Do not add Figma Telemetry/Settings unless real data exists.
 
 ---
 

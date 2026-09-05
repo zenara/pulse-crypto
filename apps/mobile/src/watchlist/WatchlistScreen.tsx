@@ -1,6 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import {
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import type { TradingPair } from '@pulse-crypto/contracts';
+import { colors } from '../theme';
 import { useFavoritesStore } from '../state/favorites-store';
 import { useMarketStore } from '../state/market-store';
 import { ConnectionBanner } from './ConnectionBanner';
@@ -10,13 +18,16 @@ import { WatchlistRow } from './WatchlistRow';
 interface WatchlistScreenProps {
   wsConfigured: boolean;
   onSelectPair: (pair: TradingPair) => void;
+  onRefreshMeta?: () => Promise<void>;
 }
 
 export function WatchlistScreen({
   wsConfigured,
   onSelectPair,
+  onRefreshMeta,
 }: WatchlistScreenProps) {
   const [query, setQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
   const pairs = useMarketStore((state) => state.pairs);
   const metaError = useMarketStore((state) => state.metaError);
   const protocolError = useMarketStore((state) => state.protocolError);
@@ -27,16 +38,43 @@ export function WatchlistScreen({
     [pairs, query],
   );
 
+  const onRefresh = async () => {
+    if (!onRefreshMeta) {
+      return;
+    }
+    setRefreshing(true);
+    try {
+      await onRefreshMeta();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <ScrollView
       testID="watchlist"
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            void onRefresh();
+          }}
+          tintColor={colors.secondary}
+          colors={[colors.secondary]}
+        />
+      }
     >
-      <Text style={styles.title} testID="heading" role="heading">
-        PulseCrypto
-      </Text>
-      <ConnectionBanner />
+      <View style={styles.top}>
+        <View>
+          <Text style={styles.kicker}>PulseCrypto</Text>
+          <Text style={styles.title} testID="heading" role="heading">
+            Markets
+          </Text>
+        </View>
+        <ConnectionBanner />
+      </View>
       {!wsConfigured ? (
         <Text style={styles.hint}>Set EXPO_PUBLIC_WS_URL to receive live prices.</Text>
       ) : null}
@@ -47,8 +85,8 @@ export function WatchlistScreen({
         testID="search-input"
         value={query}
         onChangeText={setQuery}
-        placeholder="Search pairs"
-        placeholderTextColor="#9ca3af"
+        placeholder="Search"
+        placeholderTextColor={colors.muted}
         autoCapitalize="none"
         autoCorrect={false}
         style={styles.search}
@@ -74,34 +112,47 @@ export function WatchlistScreen({
 const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 72,
-    paddingBottom: 32,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  top: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  kicker: {
+    fontSize: 12,
+    letterSpacing: 1,
+    color: colors.muted,
+    marginBottom: 4,
   },
   title: {
     fontSize: 28,
-    fontWeight: '600',
-    color: '#111827',
+    fontWeight: '700',
+    color: colors.text,
   },
   hint: {
     marginTop: 12,
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.muted,
   },
   error: {
     marginTop: 12,
     fontSize: 14,
-    color: '#b91c1c',
+    color: colors.tertiary,
   },
   search: {
-    marginTop: 16,
+    marginTop: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 16,
-    color: '#111827',
+    color: colors.text,
   },
 });

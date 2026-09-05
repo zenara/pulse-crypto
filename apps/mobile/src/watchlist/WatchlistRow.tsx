@@ -1,8 +1,10 @@
 import React, { memo, useCallback } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { TradingPair } from '@pulse-crypto/contracts';
+import { colors, mono } from '../theme';
 import { selectMarket, useMarketStore } from '../state/market-store';
 import { useFavoritesStore } from '../state/favorites-store';
+import { useTickFlash } from '../ui/use-tick-flash';
 import { changeTone, formatChangePercent, formatPrice } from './format-market';
 
 interface WatchlistRowProps {
@@ -21,6 +23,7 @@ export const WatchlistRow = memo(function WatchlistRow({
     state.favorites.includes(symbol),
   );
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const flash = useTickFlash(market?.lastPrice);
 
   const onOpen = useCallback(() => {
     onSelectPair(symbol);
@@ -33,7 +36,30 @@ export const WatchlistRow = memo(function WatchlistRow({
   const tone = changeTone(market?.change24hPercent);
 
   return (
-    <View style={styles.row} testID={`pair-${symbol}`}>
+    <View
+      style={[
+        styles.row,
+        flash === 'up' && styles.flashUp,
+        flash === 'down' && styles.flashDown,
+      ]}
+      testID={`pair-${symbol}`}
+    >
+      <Pressable
+        testID={`pair-${symbol}-favorite`}
+        onPress={onToggle}
+        accessibilityRole="button"
+        accessibilityLabel={
+          favorite
+            ? `Remove ${symbol} from favourites`
+            : `Add ${symbol} to favourites`
+        }
+        hitSlop={8}
+        style={styles.favorite}
+      >
+        <Text style={[styles.star, favorite && styles.starOn]}>
+          {favorite ? '★' : '☆'}
+        </Text>
+      </Pressable>
       <Pressable
         testID={`pair-${symbol}-open`}
         onPress={onOpen}
@@ -61,20 +87,6 @@ export const WatchlistRow = memo(function WatchlistRow({
           </Text>
         </View>
       </Pressable>
-      <Pressable
-        testID={`pair-${symbol}-favorite`}
-        onPress={onToggle}
-        accessibilityRole="button"
-        accessibilityLabel={
-          favorite
-            ? `Remove ${symbol} from favourites`
-            : `Add ${symbol} to favourites`
-        }
-        hitSlop={8}
-        style={styles.favorite}
-      >
-        <Text style={styles.star}>{favorite ? '★' : '☆'}</Text>
-      </Pressable>
     </View>
   );
 });
@@ -84,8 +96,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
+    paddingHorizontal: 4,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
+    borderRadius: 8,
+  },
+  flashUp: {
+    backgroundColor: colors.secondaryDim,
+  },
+  flashDown: {
+    backgroundColor: colors.tertiaryDim,
   },
   open: {
     flex: 1,
@@ -99,12 +119,14 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.text,
   },
   symbol: {
     marginTop: 2,
-    fontSize: 12,
-    color: '#6b7280',
+    fontSize: 11,
+    letterSpacing: 0.4,
+    color: colors.muted,
+    fontFamily: mono,
   },
   quotes: {
     alignItems: 'flex-end',
@@ -113,27 +135,32 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 16,
     fontVariant: ['tabular-nums'],
-    color: '#111827',
+    color: colors.text,
+    fontFamily: mono,
   },
   change: {
     marginTop: 2,
     fontSize: 13,
     fontVariant: ['tabular-nums'],
-    color: '#6b7280',
+    color: colors.muted,
+    fontFamily: mono,
   },
   up: {
-    color: '#15803d',
+    color: colors.secondary,
   },
   down: {
-    color: '#b91c1c',
+    color: colors.tertiary,
   },
   favorite: {
-    marginLeft: 12,
-    width: 36,
+    marginRight: 8,
+    width: 28,
     alignItems: 'center',
   },
   star: {
-    fontSize: 22,
-    color: '#d97706',
+    fontSize: 20,
+    color: colors.muted,
+  },
+  starOn: {
+    color: colors.secondary,
   },
 });

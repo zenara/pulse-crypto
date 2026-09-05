@@ -82,11 +82,7 @@ The implementation should favor clarity unless profiling demonstrates a need for
 
 # Animations
 
-Price changes should use lightweight animations.
-
-A price update should not cause expensive layout work across the entire screen.
-
-Animations should be isolated to the component whose value changed.
+Price changes use a 350ms background tint on the updated row or details price block (`useTickFlash`). That is isolated to the component that already subscribed to that pair.
 
 ---
 

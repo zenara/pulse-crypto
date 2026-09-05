@@ -1,28 +1,25 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { colors } from '../theme';
 import { useMarketStore } from '../state/market-store';
 import { connectionStatusLabel } from './connection-status-label';
 
 const STATUS_COLOR: Record<string, string> = {
-  connected: '#15803d',
-  connecting: '#b45309',
-  reconnecting: '#b45309',
-  disconnected: '#6b7280',
-  error: '#b91c1c',
+  connected: colors.secondary,
+  connecting: colors.warning,
+  reconnecting: colors.warning,
+  disconnected: colors.muted,
+  error: colors.tertiary,
 };
 
 export function ConnectionBanner() {
   const status = useMarketStore((state) => state.connectionStatus);
+  const color = STATUS_COLOR[status] ?? colors.muted;
 
   return (
-    <View style={styles.row}>
-      <View
-        style={[
-          styles.dot,
-          { backgroundColor: STATUS_COLOR[status] ?? STATUS_COLOR.disconnected },
-        ]}
-      />
-      <Text testID="connection-status" style={styles.label}>
+    <View style={[styles.pill, { borderColor: color }]}>
+      <View style={[styles.dot, { backgroundColor: color }]} />
+      <Text testID="connection-status" style={[styles.label, { color }]}>
         {connectionStatusLabel(status)}
       </Text>
     </View>
@@ -30,19 +27,24 @@ export function ConnectionBanner() {
 }
 
 const styles = StyleSheet.create({
-  row: {
+  pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
   },
   label: {
-    fontSize: 15,
-    color: '#4b5563',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
   },
 });

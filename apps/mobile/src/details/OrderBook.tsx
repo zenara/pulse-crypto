@@ -1,6 +1,7 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { StyleSheet, Text, View, type DimensionValue } from 'react-native';
 import type { OrderBookLevel } from '@pulse-crypto/contracts';
+import { colors, mono } from '../theme';
 import { formatPrice, formatQuantity } from '../watchlist/format-market';
 
 interface OrderBookProps {
@@ -9,6 +10,17 @@ interface OrderBookProps {
 }
 
 export function OrderBook({ bids, asks }: OrderBookProps) {
+  const maxQuantity = useMemo(() => {
+    let max = 0;
+    for (const level of bids) {
+      max = Math.max(max, level.quantity);
+    }
+    for (const level of asks) {
+      max = Math.max(max, level.quantity);
+    }
+    return max || 1;
+  }, [bids, asks]);
+
   if (bids.length === 0 && asks.length === 0) {
     return (
       <Text testID="order-book-empty" style={styles.empty}>
@@ -30,24 +42,20 @@ export function OrderBook({ bids, asks }: OrderBookProps) {
         const ask = asks[index];
         return (
           <View key={index} style={styles.level}>
-            <Text testID={`bid-${index}-price`} style={[styles.cell, styles.bid]}>
-              {bid ? formatPrice(bid.price) : '—'}
-            </Text>
-            <Text
-              testID={`bid-${index}-quantity`}
-              style={[styles.cell, styles.bid, styles.qty]}
-            >
-              {bid ? formatQuantity(bid.quantity) : '—'}
-            </Text>
-            <Text testID={`ask-${index}-price`} style={[styles.cell, styles.ask]}>
-              {ask ? formatPrice(ask.price) : '—'}
-            </Text>
-            <Text
-              testID={`ask-${index}-quantity`}
-              style={[styles.cell, styles.ask, styles.qty]}
-            >
-              {ask ? formatQuantity(ask.quantity) : '—'}
-            </Text>
+            <BookSide
+              side="bid"
+              level={bid}
+              maxQuantity={maxQuantity}
+              priceTestID={`bid-${index}-price`}
+              quantityTestID={`bid-${index}-quantity`}
+            />
+            <BookSide
+              side="ask"
+              level={ask}
+              maxQuantity={maxQuantity}
+              priceTestID={`ask-${index}-price`}
+              quantityTestID={`ask-${index}-quantity`}
+            />
           </View>
         );
       })}
@@ -55,10 +63,55 @@ export function OrderBook({ bids, asks }: OrderBookProps) {
   );
 }
 
+function BookSide({
+  side,
+  level,
+  maxQuantity,
+  priceTestID,
+  quantityTestID,
+}: {
+  side: 'bid' | 'ask';
+  level: OrderBookLevel | undefined;
+  maxQuantity: number;
+  priceTestID: string;
+  quantityTestID: string;
+}) {
+  const width: DimensionValue = level
+    ? `${Math.max(8, (level.quantity / maxQuantity) * 100)}%`
+    : 0;
+  const isBid = side === 'bid';
+
+  return (
+    <View style={styles.side}>
+      {level ? (
+        <View
+          style={[
+            styles.depth,
+            isBid ? styles.depthBid : styles.depthAsk,
+            { width },
+          ]}
+        />
+      ) : null}
+      <Text
+        testID={priceTestID}
+        style={[styles.cell, isBid ? styles.bid : styles.ask]}
+      >
+        {level ? formatPrice(level.price) : '—'}
+      </Text>
+      <Text
+        testID={quantityTestID}
+        style={[styles.cell, styles.qty, isBid ? styles.bid : styles.ask]}
+      >
+        {level ? formatQuantity(level.quantity) : '—'}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   empty: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.muted,
   },
   header: {
     flexDirection: 'row',
@@ -66,32 +119,57 @@ const styles = StyleSheet.create({
   },
   headerCell: {
     flex: 1,
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.6,
   },
   bidHeader: {
-    color: '#15803d',
+    color: colors.secondary,
   },
   askHeader: {
-    color: '#b91c1c',
+    color: colors.tertiary,
     textAlign: 'right',
   },
   level: {
     flexDirection: 'row',
-    paddingVertical: 4,
+    gap: 8,
+    marginBottom: 2,
+  },
+  side: {
+    flex: 1,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    borderRadius: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 6,
+  },
+  depth: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+  },
+  depthBid: {
+    left: 0,
+    backgroundColor: colors.secondaryDim,
+  },
+  depthAsk: {
+    right: 0,
+    backgroundColor: colors.tertiaryDim,
   },
   cell: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 12,
     fontVariant: ['tabular-nums'],
+    fontFamily: mono,
+    zIndex: 1,
   },
   qty: {
     textAlign: 'right',
   },
   bid: {
-    color: '#15803d',
+    color: colors.secondary,
   },
   ask: {
-    color: '#b91c1c',
+    color: colors.tertiary,
   },
 });
