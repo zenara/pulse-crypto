@@ -51,7 +51,7 @@ Avoid causing the entire application tree to re-render for every market update.
 
 Use selective Zustand subscriptions.
 
-For example, a watchlist row should ideally subscribe to the state required by that row rather than the entire market store.
+`selectMarket(pair)` is available for per-row subscriptions. The Phase 7 placeholder `App` still reads the full `markets` map; watchlist rows in Phase 8 should subscribe to the state required by that row rather than the entire market store.
 
 ---
 

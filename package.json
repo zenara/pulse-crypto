@@ -76,6 +76,7 @@
     "@pulse-crypto/contracts": "workspace:*",
     "@pulse-crypto/market-domain": "workspace:*",
     "@pulse-crypto/shared": "workspace:*",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~56.0.0",
     "expo-splash-screen": "~56.0.10",
     "expo-status-bar": "~56.0.4",
@@ -88,6 +89,7 @@
     "react-native-web": "~0.21.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0",
-    "ws": "^8.21.3"
+    "ws": "^8.21.3",
+    "zustand": "5.0.8"
   }
 }

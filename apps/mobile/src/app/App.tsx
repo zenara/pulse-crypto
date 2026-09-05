@@ -1,66 +1,27 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
-import type {
-  ConnectionStatus,
-  MarketState,
-  PairMetadata,
-} from '@pulse-crypto/contracts';
+import type { MarketState, PairMetadata } from '@pulse-crypto/contracts';
 import { readMobileEnv } from '../config/env';
-import { apiErrorMessage } from '../networking/api-error';
-import { MarketWebSocketService } from '../networking/market-websocket.service';
-import { fetchPairsMeta } from '../networking/pairs-meta-api';
+import { MarketSession } from '../session/market-session';
+import { useMarketStore, type MarketsByPair } from '../state/market-store';
 
 export const App = () => {
   const env = useMemo(() => readMobileEnv(), []);
-  const [status, setStatus] = useState<ConnectionStatus>(
-    env.wsUrl ? 'disconnected' : 'error',
-  );
-  const [pairs, setPairs] = useState<readonly PairMetadata[]>([]);
-  const [markets, setMarkets] = useState<readonly MarketState[]>([]);
-  const [metaError, setMetaError] = useState<string | undefined>();
+  const status = useMarketStore((state) => state.connectionStatus);
+  const pairs = useMarketStore((state) => state.pairs);
+  const markets = useMarketStore((state) => state.markets);
+  const metaError = useMarketStore((state) => state.metaError);
 
   useEffect(() => {
-    if (!env.apiUrl) {
-      return;
-    }
-
-    let cancelled = false;
-    fetchPairsMeta(env.apiUrl)
-      .then((result) => {
-        if (!cancelled) {
-          setPairs(result);
-          setMetaError(undefined);
-        }
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          setMetaError(apiErrorMessage(error));
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [env.apiUrl]);
-
-  useEffect(() => {
-    if (!env.wsUrl) {
-      return;
-    }
-
-    const service = new MarketWebSocketService({
-      url: env.wsUrl,
-      listener: {
-        onStatus: setStatus,
-        onSnapshot: setMarkets,
-        onProtocolError: () => undefined,
-      },
+    const session = new MarketSession({
+      apiUrl: env.apiUrl,
+      wsUrl: env.wsUrl,
     });
-    service.start();
+    session.start();
     return () => {
-      service.stop();
+      session.stop();
     };
-  }, [env.wsUrl]);
+  }, [env.apiUrl, env.wsUrl]);
 
   const rows = rowsForDisplay(pairs, markets);
 
@@ -91,17 +52,19 @@ export const App = () => {
 
 function rowsForDisplay(
   pairs: readonly PairMetadata[],
-  markets: readonly MarketState[],
+  markets: MarketsByPair,
 ): Array<{ symbol: string; label: string; price: number | undefined }> {
   if (pairs.length > 0) {
     return pairs.map((pair) => ({
       symbol: pair.symbol,
       label: pair.displayName,
-      price: markets.find((market) => market.pair === pair.symbol)?.lastPrice,
+      price: markets[pair.symbol]?.lastPrice,
     }));
   }
 
-  return markets.map((market) => ({
+  return Object.values(markets)
+    .filter((market): market is MarketState => market !== undefined)
+    .map((market) => ({
     symbol: market.pair,
     label: market.pair,
     price: market.lastPrice,

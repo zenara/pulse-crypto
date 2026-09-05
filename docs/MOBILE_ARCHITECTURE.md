@@ -31,12 +31,16 @@ The WebSocket service is responsible for:
 It should not directly manipulate React components.
 
 ```text
-WebSocketService
+MarketSession
        ↓
-MarketStore
+WebSocketService / REST
+       ↓
+MarketStore / FavoritesStore
        ↓
 Components
 ```
+
+`MarketSession` is the composition root. Screens subscribe to stores; they do not create sockets.
 
 ---
 

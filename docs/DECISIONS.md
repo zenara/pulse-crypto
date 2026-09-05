@@ -89,6 +89,8 @@ The application does not represent the complete exchange order book.
 
 Use Zustand for mobile application state.
 
+Implemented in Phase 7 as `MarketStore` (live markets, connection status, REST metadata) and `FavoritesStore` (user preferences only). The `MarketSession` composition root owns the WebSocket and writes into the stores so screens do not create sockets.
+
 ### Reason
 
 The state requirements are relatively small, while selective subscriptions are useful for frequent market updates.
@@ -104,6 +106,8 @@ Redux could provide similar capabilities but would introduce additional ceremony
 ### Decision
 
 Persist favourites using AsyncStorage.
+
+Implemented in Phase 7 behind `FavoritesStorage`. Only favourite pair symbols are persisted. Live market snapshots stay in memory.
 
 ### Reason
 

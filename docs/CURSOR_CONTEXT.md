@@ -57,6 +57,8 @@ Declared / verified in this project:
 | React | ^19.2.0 |
 | Jest | ~30.3.0 |
 | `ws` | ^8.21.3 |
+| Zustand | **5.0.8** |
+| AsyncStorage | **2.2.0** (not 3.x — Expo 56 managed) |
 
 Node 18 was incompatible with Nx 23 + Expo 56.
 
@@ -79,7 +81,7 @@ Node 18 was incompatible with Nx 23 + Expo 56.
 - Start: `@nx/expo` `start` forks Expo CLI with `cwd` = `apps/mobile`.
 - Jest: `jest-expo`; maps `@pulse-crypto/contracts` and `@pulse-crypto/shared` to lib **source**. `App.spec.tsx` mocks `readMobileEnv` so tests do not open sockets.
 
-Zustand and AsyncStorage are **not** installed yet.
+Zustand **5.0.8** and `@react-native-async-storage/async-storage` **2.2.0**. Jest mocks AsyncStorage in `src/test-setup.ts`.
 
 ---
 
@@ -129,7 +131,7 @@ See `docs/DECISIONS.md`. In short:
 - Latest-state per pair, in memory, no event replay (ADR-001, 003).
 - Default 100ms snapshots (ADR-002).
 - Bounded book, default 10/10 (ADR-004).
-- Zustand + AsyncStorage favourites (ADR-005, 006) — **planned**, not coded.
+- Zustand + AsyncStorage favourites (ADR-005, 006) — implemented in Phase 7.
 - REST metadata vs WS live data (ADR-007).
 - No DB, no Kafka/Redis/RabbitMQ (ADR-008, 009).
 - Nx + pnpm (ADR-010), Node 22 (ADR-011).
@@ -144,7 +146,7 @@ See `docs/DECISIONS.md`. In short:
 
 ```text
 Binance → BinanceFeedService → MarketProcessor → MarketGateway
-  → MarketWebSocketService → (store later) → UI
+  → MarketWebSocketService → MarketStore / FavoritesStore → UI
 ```
 
 - Combined stream; parser normalizes to domain types; no Binance payloads on mobile.
@@ -157,9 +159,12 @@ Binance → BinanceFeedService → MarketProcessor → MarketGateway
 
 ## 12. Mobile state management
 
-**Intended:** `WebSocketService` → Zustand `MarketStore` + `FavoritesStore` → UI.
+`MarketSession` → Zustand `MarketStore` + `FavoritesStore` → UI.
 
-**Actual:** `App.tsx` holds `useState` for connection status, REST pairs, and snapshots. Phase 7 should move this out of the screen.
+- `apps/mobile/src/session/market-session.ts` owns REST `GET /pairs/meta` and `MarketWebSocketService`. `refreshMeta()` does not restart the socket.
+- `MarketStore`: `connectionStatus`, `markets` (map by pair, latest-state merge), `pairs` metadata, `metaError`, `protocolError`. Disconnect updates status only; markets are not cleared.
+- `FavoritesStore`: favourite symbols only, hydrated/saved through `FavoritesStorage` (AsyncStorage key `@pulse-crypto/favorites`).
+- `App.tsx` starts/stops `MarketSession` and reads the store. It does not create a WebSocket. Watchlist UI is still Phase 8.
 
 ---
 
@@ -171,37 +176,33 @@ Binance → BinanceFeedService → MarketProcessor → MarketGateway
 - Disconnect: set status; **do not clear** last market data.
 - Pull-to-refresh = `GET /pairs/meta` only; must not restart WS.
 - Do not log every market tick.
-- RN: selective Zustand subscriptions when the store exists (`docs/PERFORMANCE.md`).
+- RN: `selectMarket(pair)` is ready for row subscriptions; placeholder App still reads the full map (`docs/PERFORMANCE.md`).
 
 ---
 
 ## 14. Explicitly not used
 
-Kafka, Redis, RabbitMQ, databases, CQRS/event sourcing, Socket.IO, a full order-book engine, REST polling for live prices, `any` without cause, extra state libraries until Phase 7.
+Kafka, Redis, RabbitMQ, databases, CQRS/event sourcing, Socket.IO, a full order-book engine, REST polling for live prices, `any` without cause, extra state libraries beyond Zustand.
 
 ---
 
 ## 15. Completed (code)
 
 - **Phase 0–5:** workspace, contracts, REST `GET /pairs/meta` (static metadata), Binance feed, processor, mobile WS gateway + tests.
-- **Phase 6:** `fetchPairsMeta`, `MarketWebSocketService`, connection states, reconnect, `App` wired to REST+WS. After updating env values, Expo started without errors and the **Android emulator showed live API data**.
-- Lint/test/typecheck were passing for `api` and `mobile` after those phases.
+- **Phase 6:** `fetchPairsMeta`, `MarketWebSocketService`, connection states, reconnect, live path confirmed on Android emulator.
+- **Phase 7:** Zustand `MarketStore` / `FavoritesStore`, AsyncStorage favourites, `MarketSession` as the networking composition root. Placeholder `App` reads stores only.
 
 ---
 
 ## 16. Currently in progress
 
-Nothing in-flight. Phase 6 live path is confirmed. Next planned work is **Phase 7 — Mobile state**.
-
-`App.tsx` still owns connection/market state via `useState`; that should move to Zustand stores.
+Nothing in-flight. Phase 7 stores and session are in place. Next planned work is **Phase 8 — Watchlist**.
 
 ---
 
 ## 17. Exact next step
 
-**Phase 7 — Mobile state:** `MarketStore`, `FavoritesStore`, AsyncStorage for favourites only (not live market data). Wire `MarketWebSocketService` → store → UI so screens do not own the socket.
-
-Do not add navigation or the full watchlist UI until stores exist (Phase 8).
+**Phase 8 — Watchlist:** pair rows, price, 24h change, connection indicator, search, favourite toggle. Use selective Zustand subscriptions. Do not add React Navigation until the watchlist needs a details route (Phase 9).
 
 ---
 
