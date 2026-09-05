@@ -12,7 +12,7 @@ OS: Windows, PowerShell. Prefer `pnpm.cmd` / `npm.cmd` if execution policy block
 Staff Engineer / Architect practical assignment: a **real-time crypto market viewer**.
 
 - NestJS backend: Binance public market WebSocket → process latest state → REST metadata + WS snapshots to mobile.
-- Expo React Native client: watchlist implemented; pair details not implemented yet.
+- Expo React Native client: watchlist and pair details implemented.
 - Goals: real-time processing, mobile performance, bounded memory, clean architecture, maintainability.
 
 Required pairs: `BTCUSDT`, `ETHUSDT`, `SOLUSDT`, `DOGEUSDT`, `XRPUSDT`.
@@ -164,7 +164,7 @@ Binance → BinanceFeedService → MarketProcessor → MarketGateway
 - `apps/mobile/src/session/market-session.ts` owns REST `GET /pairs/meta` and `MarketWebSocketService`. `refreshMeta()` does not restart the socket.
 - `MarketStore`: `connectionStatus`, `markets` (map by pair, latest-state merge), `pairs` metadata, `metaError`, `protocolError`. Disconnect updates status only; markets are not cleared.
 - `FavoritesStore`: favourite symbols only, hydrated/saved through `FavoritesStorage` (AsyncStorage key `@pulse-crypto/favorites`).
-- `App.tsx` starts/stops `MarketSession` and renders `WatchlistScreen`. Rows subscribe with `selectMarket(pair)`. Search filters the pair list in the UI; it does not write to the market store.
+- `App.tsx` starts/stops `MarketSession` and switches between `WatchlistScreen` and `MarketDetailsScreen` with local `selectedPair` state (no React Navigation). Details subscribe with `selectMarket(pair)`.
 
 ---
 
@@ -182,7 +182,7 @@ Binance → BinanceFeedService → MarketProcessor → MarketGateway
 
 ## 14. Explicitly not used
 
-Kafka, Redis, RabbitMQ, databases, CQRS/event sourcing, Socket.IO, a full order-book engine, REST polling for live prices, `any` without cause, extra state libraries beyond Zustand.
+Kafka, Redis, RabbitMQ, databases, CQRS/event sourcing, Socket.IO, React Navigation, a full order-book engine, REST polling for live prices, `any` without cause, extra state libraries beyond Zustand.
 
 ---
 
@@ -191,19 +191,20 @@ Kafka, Redis, RabbitMQ, databases, CQRS/event sourcing, Socket.IO, a full order-
 - **Phase 0–5:** workspace, contracts, REST `GET /pairs/meta` (static metadata), Binance feed, processor, mobile WS gateway + tests.
 - **Phase 6:** `fetchPairsMeta`, `MarketWebSocketService`, connection states, reconnect, live path confirmed on Android emulator.
 - **Phase 7:** Zustand `MarketStore` / `FavoritesStore`, AsyncStorage favourites, `MarketSession` as the networking composition root.
-- **Phase 8:** Watchlist with pair rows, price, 24h change, connection indicator, search, and favourite toggle. No navigation yet.
+- **Phase 8:** Watchlist with pair rows, price, 24h change, connection indicator, search, and favourite toggle.
+- **Phase 9:** Market details (price, spread, buy/sell pressure, bounded order book, last updated). Watchlist → details via local selected-pair state.
 
 ---
 
 ## 16. Currently in progress
 
-Nothing in-flight. Phase 8 watchlist is in place. Next planned work is **Phase 9 — Market Details**.
+Nothing in-flight. Phase 9 market details are in place. Next planned work is **Phase 10 — UX**.
 
 ---
 
 ## 17. Exact next step
 
-**Phase 9 — Market Details:** selecting a pair opens a live details view (price, spread, pressure, bounded order book, last updated). Add a simple Watchlist → Details navigation now; keep it minimal.
+**Phase 10 — UX:** price/volume change animation, loading/error/connection states, pull-to-refresh of `GET /pairs/meta` without restarting the WebSocket.
 
 ---
 

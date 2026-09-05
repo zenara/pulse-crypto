@@ -8,17 +8,23 @@ import { changeTone, formatChangePercent, formatPrice } from './format-market';
 interface WatchlistRowProps {
   symbol: TradingPair;
   displayName: string;
+  onSelectPair: (pair: TradingPair) => void;
 }
 
 export const WatchlistRow = memo(function WatchlistRow({
   symbol,
   displayName,
+  onSelectPair,
 }: WatchlistRowProps) {
   const market = useMarketStore(selectMarket(symbol));
   const favorite = useFavoritesStore((state) =>
     state.favorites.includes(symbol),
   );
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+
+  const onOpen = useCallback(() => {
+    onSelectPair(symbol);
+  }, [onSelectPair, symbol]);
 
   const onToggle = useCallback(() => {
     void toggleFavorite(symbol);
@@ -28,25 +34,33 @@ export const WatchlistRow = memo(function WatchlistRow({
 
   return (
     <View style={styles.row} testID={`pair-${symbol}`}>
-      <View style={styles.pair}>
-        <Text style={styles.name}>{displayName}</Text>
-        <Text style={styles.symbol}>{symbol}</Text>
-      </View>
-      <View style={styles.quotes}>
-        <Text testID={`pair-${symbol}-price`} style={styles.price}>
-          {formatPrice(market?.lastPrice)}
-        </Text>
-        <Text
-          testID={`pair-${symbol}-change`}
-          style={[
-            styles.change,
-            tone === 'up' && styles.up,
-            tone === 'down' && styles.down,
-          ]}
-        >
-          {formatChangePercent(market?.change24hPercent)}
-        </Text>
-      </View>
+      <Pressable
+        testID={`pair-${symbol}-open`}
+        onPress={onOpen}
+        accessibilityRole="button"
+        accessibilityLabel={`View ${symbol} details`}
+        style={styles.open}
+      >
+        <View style={styles.pair}>
+          <Text style={styles.name}>{displayName}</Text>
+          <Text style={styles.symbol}>{symbol}</Text>
+        </View>
+        <View style={styles.quotes}>
+          <Text testID={`pair-${symbol}-price`} style={styles.price}>
+            {formatPrice(market?.lastPrice)}
+          </Text>
+          <Text
+            testID={`pair-${symbol}-change`}
+            style={[
+              styles.change,
+              tone === 'up' && styles.up,
+              tone === 'down' && styles.down,
+            ]}
+          >
+            {formatChangePercent(market?.change24hPercent)}
+          </Text>
+        </View>
+      </Pressable>
       <Pressable
         testID={`pair-${symbol}-favorite`}
         onPress={onToggle}
@@ -72,6 +86,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#e5e7eb',
+  },
+  open: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   pair: {
     flex: 1,

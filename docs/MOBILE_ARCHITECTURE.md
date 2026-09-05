@@ -141,12 +141,12 @@ REST and WebSocket lifecycles are independent.
 
 # Navigation
 
-The application should use a simple navigation structure:
+The application uses local selected-pair state in `App` rather than a navigation library:
 
 ```text
-Watchlist
-   │
-   └── Market Details
+Watchlist  (selectedPair unset)
+   │ tap row
+   └── Market Details  (selectedPair set; Back clears it)
 ```
 
-Avoid unnecessary navigation complexity.
+React Navigation is intentionally omitted for two screens.

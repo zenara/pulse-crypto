@@ -51,7 +51,7 @@ Avoid causing the entire application tree to re-render for every market update.
 
 Use selective Zustand subscriptions.
 
-`selectMarket(pair)` is used by watchlist rows so a price update re-renders that row, not the whole list. The watchlist screen subscribes to pair metadata, search input, and errors — not the `markets` map.
+`selectMarket(pair)` is used by watchlist rows so a price update re-renders that row, not the whole list. The watchlist screen subscribes to pair metadata, search input, and errors — not the `markets` map. The details screen subscribes to one pair only.
 
 ---
 

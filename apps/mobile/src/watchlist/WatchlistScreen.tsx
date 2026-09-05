@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import type { TradingPair } from '@pulse-crypto/contracts';
 import { useFavoritesStore } from '../state/favorites-store';
 import { useMarketStore } from '../state/market-store';
 import { ConnectionBanner } from './ConnectionBanner';
@@ -8,9 +9,13 @@ import { WatchlistRow } from './WatchlistRow';
 
 interface WatchlistScreenProps {
   wsConfigured: boolean;
+  onSelectPair: (pair: TradingPair) => void;
 }
 
-export function WatchlistScreen({ wsConfigured }: WatchlistScreenProps) {
+export function WatchlistScreen({
+  wsConfigured,
+  onSelectPair,
+}: WatchlistScreenProps) {
   const [query, setQuery] = useState('');
   const pairs = useMarketStore((state) => state.pairs);
   const metaError = useMarketStore((state) => state.metaError);
@@ -58,6 +63,7 @@ export function WatchlistScreen({ wsConfigured }: WatchlistScreenProps) {
             key={pair.symbol}
             symbol={pair.symbol}
             displayName={pair.displayName}
+            onSelectPair={onSelectPair}
           />
         ))
       )}

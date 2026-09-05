@@ -54,7 +54,7 @@ describe('WatchlistScreen', () => {
     useMarketStore.getState().applySnapshot([btc, eth]);
     useMarketStore.getState().setConnectionStatus('connected');
 
-    const { getByTestId } = render(<WatchlistScreen wsConfigured />);
+    const { getByTestId } = render(<WatchlistScreen wsConfigured onSelectPair={() => undefined} />);
 
     expect(getByTestId('connection-status')).toHaveTextContent('Connected');
     expect(getByTestId('pair-BTCUSDT')).toHaveTextContent(/BTC \/ USDT/);
@@ -67,7 +67,7 @@ describe('WatchlistScreen', () => {
     useMarketStore.getState().setPairs([btcMeta, ethMeta]);
 
     const { getByTestId, queryByTestId } = render(
-      <WatchlistScreen wsConfigured />,
+      <WatchlistScreen wsConfigured onSelectPair={() => undefined} />,
     );
 
     fireEvent.changeText(getByTestId('search-input'), 'eth');
@@ -79,7 +79,7 @@ describe('WatchlistScreen', () => {
   it('toggles a favourite from the row control', async () => {
     useMarketStore.getState().setPairs([btcMeta]);
 
-    const { getByTestId } = render(<WatchlistScreen wsConfigured />);
+    const { getByTestId } = render(<WatchlistScreen wsConfigured onSelectPair={() => undefined} />);
 
     fireEvent.press(getByTestId('pair-BTCUSDT-favorite'));
 
@@ -99,9 +99,20 @@ describe('WatchlistScreen', () => {
     useMarketStore.getState().applySnapshot([btc]);
     useMarketStore.getState().setConnectionStatus('disconnected');
 
-    const { getByTestId } = render(<WatchlistScreen wsConfigured />);
+    const { getByTestId } = render(<WatchlistScreen wsConfigured onSelectPair={() => undefined} />);
 
     expect(getByTestId('connection-status')).toHaveTextContent('Disconnected');
     expect(getByTestId('pair-BTCUSDT-price')).toHaveTextContent('65,000.50');
+  });
+
+  it('notifies when a pair row is selected', () => {
+    useMarketStore.getState().setPairs([btcMeta]);
+    const onSelectPair = jest.fn();
+    const { getByTestId } = render(
+      <WatchlistScreen wsConfigured onSelectPair={onSelectPair} />,
+    );
+
+    fireEvent.press(getByTestId('pair-BTCUSDT-open'));
+    expect(onSelectPair).toHaveBeenCalledWith('BTCUSDT');
   });
 });

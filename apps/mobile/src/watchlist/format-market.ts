@@ -1,5 +1,5 @@
-export function formatPrice(value: number | undefined): string {
-  if (value === undefined || !Number.isFinite(value)) {
+export function formatPrice(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) {
     return '—';
   }
 
@@ -22,6 +22,16 @@ export function formatPrice(value: number | undefined): string {
   });
 }
 
+export function formatQuantity(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) {
+    return '—';
+  }
+  return value.toLocaleString('en-US', {
+    maximumFractionDigits: 8,
+    minimumFractionDigits: 0,
+  });
+}
+
 export function formatChangePercent(value: number | undefined): string {
   if (value === undefined || !Number.isFinite(value)) {
     return '—';
@@ -29,6 +39,20 @@ export function formatChangePercent(value: number | undefined): string {
 
   const sign = value > 0 ? '+' : '';
   return `${sign}${value.toFixed(2)}%`;
+}
+
+export function formatPressure(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) {
+    return '—';
+  }
+  return `${value.toFixed(1)}%`;
+}
+
+export function formatUpdatedAt(value: number | undefined): string {
+  if (value === undefined || !Number.isFinite(value) || value <= 0) {
+    return '—';
+  }
+  return new Date(value).toISOString();
 }
 
 export function changeTone(
