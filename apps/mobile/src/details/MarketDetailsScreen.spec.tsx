@@ -66,6 +66,17 @@ describe('MarketDetailsScreen', () => {
     expect(getByTestId('connection-status')).toHaveTextContent('Disconnected');
     expect(getByTestId('details-price')).toHaveTextContent('65,000.50');
     expect(getByTestId('order-book')).toBeTruthy();
+    expect(getByTestId('stale-data-hint')).toBeTruthy();
+  });
+
+  it('explains an empty details view while connecting', () => {
+    useMarketStore.getState().setConnectionStatus('connecting');
+    const { getByTestId } = render(
+      <MarketDetailsScreen pair="BTCUSDT" onBack={() => undefined} />,
+    );
+    expect(getByTestId('details-empty')).toHaveTextContent(
+      /Connecting to live market data/,
+    );
   });
 
   it('invokes back', () => {

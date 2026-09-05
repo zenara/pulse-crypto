@@ -67,6 +67,8 @@ pnpm nx test mobile
 pnpm nx run-many -t lint test build typecheck
 ```
 
+GitHub Actions (`.github/workflows/ci.yml`) runs lint, typecheck, and tests on every pull request, and builds `api` plus the shared libraries. Expo `mobile` `build` is omitted from CI because it needs EAS/native credentials.
+
 ## Architecture
 
 Live market data uses latest-state snapshots (default 100ms), not a 1:1 forward of every Binance event.

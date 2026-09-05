@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import type { TradingPair } from '@pulse-crypto/contracts';
 import { colors } from '../theme';
+import { ErrorBanner } from '../ui/ErrorBanner';
+import { StaleDataHint } from '../ui/StaleDataHint';
 import { useFavoritesStore } from '../state/favorites-store';
 import { useMarketStore } from '../state/market-store';
 import { ConnectionBanner } from './ConnectionBanner';
@@ -29,6 +31,7 @@ export function WatchlistScreen({
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const pairs = useMarketStore((state) => state.pairs);
+  const metaLoading = useMarketStore((state) => state.metaLoading);
   const metaError = useMarketStore((state) => state.metaError);
   const protocolError = useMarketStore((state) => state.protocolError);
   const persistError = useFavoritesStore((state) => state.persistError);
@@ -75,12 +78,30 @@ export function WatchlistScreen({
         </View>
         <ConnectionBanner />
       </View>
+      <StaleDataHint />
+      {metaLoading ? (
+        <Text testID="watchlist-loading" style={styles.hint}>
+          Loading markets…
+        </Text>
+      ) : null}
       {!wsConfigured ? (
         <Text style={styles.hint}>Set EXPO_PUBLIC_WS_URL to receive live prices.</Text>
       ) : null}
-      {metaError ? <Text style={styles.error}>{metaError}</Text> : null}
-      {protocolError ? <Text style={styles.error}>{protocolError}</Text> : null}
-      {persistError ? <Text style={styles.error}>{persistError}</Text> : null}
+      {metaError ? (
+        <ErrorBanner
+          testID="meta-error"
+          message={metaError}
+          onRetry={
+            onRefreshMeta
+              ? () => {
+                  void onRefresh();
+                }
+              : undefined
+          }
+        />
+      ) : null}
+      {protocolError ? <ErrorBanner message={protocolError} /> : null}
+      {persistError ? <ErrorBanner message={persistError} /> : null}
       <TextInput
         testID="search-input"
         value={query}
@@ -137,11 +158,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     color: colors.muted,
-  },
-  error: {
-    marginTop: 12,
-    fontSize: 14,
-    color: colors.tertiary,
   },
   search: {
     marginTop: 8,

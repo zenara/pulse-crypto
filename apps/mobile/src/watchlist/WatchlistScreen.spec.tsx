@@ -105,6 +105,43 @@ describe('WatchlistScreen', () => {
     expect(getByTestId('pair-BTCUSDT-price')).toHaveTextContent('65,000.50');
   });
 
+  it('shows a loading hint while metadata is in flight', () => {
+    useMarketStore.getState().beginMetaLoad();
+    const { getByTestId } = render(
+      <WatchlistScreen wsConfigured onSelectPair={() => undefined} />,
+    );
+    expect(getByTestId('watchlist-loading')).toHaveTextContent(/Loading markets/);
+  });
+
+  it('retries metadata from the error banner', () => {
+    useMarketStore.getState().setMetaError('Unable to retrieve pair metadata');
+    const onRefreshMeta = jest.fn().mockResolvedValue(undefined);
+    const { getByTestId } = render(
+      <WatchlistScreen
+        wsConfigured
+        onSelectPair={() => undefined}
+        onRefreshMeta={onRefreshMeta}
+      />,
+    );
+
+    fireEvent.press(getByTestId('retry-meta'));
+    expect(onRefreshMeta).toHaveBeenCalled();
+  });
+
+  it('explains stale prices after disconnect', () => {
+    useMarketStore.getState().setPairs([btcMeta]);
+    useMarketStore.getState().applySnapshot([btc]);
+    useMarketStore.getState().setConnectionStatus('disconnected');
+
+    const { getByTestId } = render(
+      <WatchlistScreen wsConfigured onSelectPair={() => undefined} />,
+    );
+
+    expect(getByTestId('stale-data-hint')).toHaveTextContent(
+      /Showing last received prices/,
+    );
+  });
+
   it('notifies when a pair row is selected', () => {
     useMarketStore.getState().setPairs([btcMeta]);
     const onSelectPair = jest.fn();

@@ -66,4 +66,15 @@ describe('market store', () => {
     expect(selectMarket('BTCUSDT')(useMarketStore.getState())).toEqual(btc);
     expect(selectMarket('ETHUSDT')(useMarketStore.getState())).toBeUndefined();
   });
+
+  it('tracks metadata loading independently of live markets', () => {
+    useMarketStore.getState().beginMetaLoad();
+    expect(useMarketStore.getState().metaLoading).toBe(true);
+    useMarketStore.getState().setMetaError('Unable to retrieve pair metadata');
+    expect(useMarketStore.getState().metaLoading).toBe(false);
+    useMarketStore.getState().beginMetaLoad();
+    useMarketStore.getState().setPairs([btcMeta]);
+    expect(useMarketStore.getState().metaLoading).toBe(false);
+    expect(useMarketStore.getState().metaError).toBeUndefined();
+  });
 });

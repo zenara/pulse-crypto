@@ -193,19 +193,22 @@ Kafka, Redis, RabbitMQ, databases, CQRS/event sourcing, Socket.IO, React Navigat
 - **Phase 7:** Zustand `MarketStore` / `FavoritesStore`, AsyncStorage favourites, `MarketSession` as the networking composition root.
 - **Phase 8:** Watchlist with pair rows, price, 24h change, connection indicator, search, and favourite toggle.
 - **Phase 9:** Market details (price, spread, buy/sell pressure, bounded order book, last updated). Watchlist → details via local selected-pair state.
-- **Phase 10 (partial) + visual pass:** Dark PulseCrypto theme from `UI/` PNGs (not Figma MCP — Dev Mode unavailable). Markets/Terminal chrome, order-book depth bars, price tick flash, pull-to-refresh metadata. Telemetry/Settings/account sidebar from the Figma exports were not built — they are not assignment features and would require fake telemetry.
+- **Phase 10:** Dark theme, price/quantity tick flash, pull-to-refresh, loading/error banners, retry, stale-data hint, connection-aware empty details.
+- **Phase 11:** Resilience coverage for REST failure, metadata loading, disconnect-without-clear, favourite hydrate, retry.
+- **Phase 12:** Performance notes recorded in `docs/PERFORMANCE.md` (no profiler run).
+- **Phase 14:** GitHub Actions CI for lint/typecheck/test + API/lib build.
 
 ---
 
 ## 16. Currently in progress
 
-Nothing in-flight. Visual restyle from PNG references is in place. Remaining Phase 10 polish: loading placeholders, richer error states, order-book quantity animation.
+Nothing in-flight. Next planned work is **Phase 13 leftover tests / Phase 15 README polish** if a submission pass is needed. Live emulator re-check is still manual.
 
 ---
 
 ## 17. Exact next step
 
-**Phase 10 remainder:** loading placeholders and stronger empty/error states. Order-book quantity animation if it stays cheap. Do not add Figma Telemetry/Settings unless real data exists.
+**Phase 15 — Documentation:** README and architecture docs are largely in place. Before submission, refresh README screenshots/recording notes and confirm `docs/` matches the PNG-themed UI.
 
 ---
 

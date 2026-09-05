@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { StyleSheet, Text, View, type DimensionValue } from 'react-native';
 import type { OrderBookLevel } from '@pulse-crypto/contracts';
 import { colors, mono } from '../theme';
+import { useTickFlash } from '../ui/use-tick-flash';
 import { formatPrice, formatQuantity } from '../watchlist/format-market';
 
 interface OrderBookProps {
@@ -76,13 +77,20 @@ function BookSide({
   priceTestID: string;
   quantityTestID: string;
 }) {
+  const flash = useTickFlash(level?.quantity);
   const width: DimensionValue = level
     ? `${Math.max(8, (level.quantity / maxQuantity) * 100)}%`
     : 0;
   const isBid = side === 'bid';
 
   return (
-    <View style={styles.side}>
+    <View
+      style={[
+        styles.side,
+        flash === 'up' && styles.flashUp,
+        flash === 'down' && styles.flashDown,
+      ]}
+    >
       {level ? (
         <View
           style={[
@@ -142,6 +150,12 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     paddingVertical: 5,
     paddingHorizontal: 6,
+  },
+  flashUp: {
+    backgroundColor: colors.secondaryDim,
+  },
+  flashDown: {
+    backgroundColor: colors.tertiaryDim,
   },
   depth: {
     position: 'absolute',

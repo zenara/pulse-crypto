@@ -123,6 +123,34 @@ describe('MarketSession', () => {
     expect(useMarketStore.getState().metaError).toBe(
       'Unable to retrieve pair metadata',
     );
+    expect(useMarketStore.getState().metaLoading).toBe(false);
+    session.stop();
+  });
+
+  it('marks metadata as loading until REST resolves', async () => {
+    let resolvePairs: (value: PairMetadata[]) => void = () => undefined;
+    const fetchPairs = jest.fn(
+      () =>
+        new Promise<PairMetadata[]>((resolve) => {
+          resolvePairs = resolve;
+        }),
+    );
+    const session = new MarketSession({
+      apiUrl: 'http://api.test',
+      wsUrl: undefined,
+      fetchPairs,
+      hydrateFavorites: async () => undefined,
+    });
+
+    session.start();
+    expect(useMarketStore.getState().metaLoading).toBe(true);
+
+    resolvePairs([btcMeta]);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(useMarketStore.getState().metaLoading).toBe(false);
+    expect(useMarketStore.getState().pairs).toEqual([btcMeta]);
     session.stop();
   });
 

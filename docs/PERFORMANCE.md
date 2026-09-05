@@ -130,3 +130,18 @@ If the number of trading pairs increased significantly, potential future improve
 - Server-side subscription filtering
 
 These are intentionally outside the scope of the assignment.
+
+---
+
+# Phase 12 review (current five pairs)
+
+Observed from the implementation, not from a profiler run:
+
+- Watchlist rows and details subscribe with `selectMarket(pair)`. The list does not subscribe to the full `markets` map.
+- Snapshots replace latest state; the client does not queue ticks.
+- Order-book bars are width + a 350ms quantity flash. No per-level `Animated.Value` (that would allocate on every 100ms snapshot).
+- Five pairs do not need FlatList virtualization.
+- Tick flash is local to the updated row or details price block.
+
+If pair count grew into the hundreds, revisit virtualized lists and cheaper book diffs.
+

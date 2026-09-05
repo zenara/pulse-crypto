@@ -62,14 +62,21 @@ export class MarketSession {
     }
 
     const request = ++this.metaRequest;
+    useMarketStore.getState().beginMetaLoad();
     try {
       const pairs = await this.fetchPairs(this.apiUrl);
       if (this.stopped || request !== this.metaRequest) {
+        if (this.stopped) {
+          useMarketStore.setState({ metaLoading: false });
+        }
         return;
       }
       useMarketStore.getState().setPairs(pairs);
     } catch (error: unknown) {
       if (this.stopped || request !== this.metaRequest) {
+        if (this.stopped) {
+          useMarketStore.setState({ metaLoading: false });
+        }
         return;
       }
       useMarketStore.getState().setMetaError(apiErrorMessage(error));

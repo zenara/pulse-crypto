@@ -12,10 +12,12 @@ export interface MarketStoreState {
   connectionStatus: ConnectionStatus;
   markets: MarketsByPair;
   pairs: PairMetadata[];
+  metaLoading: boolean;
   metaError: string | undefined;
   protocolError: string | undefined;
   setConnectionStatus: (status: ConnectionStatus) => void;
   applySnapshot: (states: readonly MarketState[]) => void;
+  beginMetaLoad: () => void;
   setPairs: (pairs: readonly PairMetadata[]) => void;
   setMetaError: (message: string | undefined) => void;
   setProtocolError: (message: string | undefined) => void;
@@ -25,6 +27,7 @@ const initialState = {
   connectionStatus: 'disconnected' as ConnectionStatus,
   markets: {} as MarketsByPair,
   pairs: [] as PairMetadata[],
+  metaLoading: false,
   metaError: undefined as string | undefined,
   protocolError: undefined as string | undefined,
 };
@@ -43,8 +46,9 @@ export const useMarketStore = create<MarketStoreState>((set) => ({
       }
       return { markets };
     }),
-  setPairs: (pairs) => set({ pairs: [...pairs], metaError: undefined }),
-  setMetaError: (metaError) => set({ metaError }),
+  beginMetaLoad: () => set({ metaLoading: true }),
+  setPairs: (pairs) => set({ pairs: [...pairs], metaError: undefined, metaLoading: false }),
+  setMetaError: (metaError) => set({ metaError, metaLoading: false }),
   setProtocolError: (protocolError) => set({ protocolError }),
 }));
 
@@ -53,6 +57,7 @@ export function resetMarketStore(): void {
     connectionStatus: initialState.connectionStatus,
     markets: {},
     pairs: [],
+    metaLoading: false,
     metaError: undefined,
     protocolError: undefined,
   });

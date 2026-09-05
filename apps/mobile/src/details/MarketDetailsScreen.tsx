@@ -7,9 +7,11 @@ import {
   Text,
   View,
 } from 'react-native';
-import type { MarketState, TradingPair } from '@pulse-crypto/contracts';
+import type { ConnectionStatus, MarketState, TradingPair } from '@pulse-crypto/contracts';
 import { colors, mono } from '../theme';
 import { selectMarket, useMarketStore } from '../state/market-store';
+import { StaleDataHint } from '../ui/StaleDataHint';
+import { useTickFlash } from '../ui/use-tick-flash';
 import { ConnectionBanner } from '../watchlist/ConnectionBanner';
 import {
   changeTone,
@@ -19,7 +21,6 @@ import {
   formatQuantity,
   formatUpdatedAt,
 } from '../watchlist/format-market';
-import { useTickFlash } from '../ui/use-tick-flash';
 import { OrderBook } from './OrderBook';
 
 const depthShader = require('../../assets/images/depth-shader.png') as number;
@@ -31,6 +32,7 @@ interface MarketDetailsScreenProps {
 
 export function MarketDetailsScreen({ pair, onBack }: MarketDetailsScreenProps) {
   const market = useMarketStore(selectMarket(pair));
+  const connectionStatus = useMarketStore((state) => state.connectionStatus);
   const displayName = useMarketStore(
     (state) =>
       state.pairs.find((item) => item.symbol === pair)?.displayName ?? pair,
@@ -52,13 +54,14 @@ export function MarketDetailsScreen({ pair, onBack }: MarketDetailsScreenProps) 
         </Pressable>
         <ConnectionBanner />
       </View>
+      <StaleDataHint />
       <Text style={styles.title} testID="details-title" role="heading">
         {displayName}
       </Text>
       <Text style={styles.symbol}>{pair}</Text>
       {market === undefined ? (
         <Text testID="details-empty" style={styles.hint}>
-          Waiting for market data
+          {emptyMarketMessage(connectionStatus)}
         </Text>
       ) : (
         <>
@@ -111,6 +114,16 @@ export function MarketDetailsScreen({ pair, onBack }: MarketDetailsScreenProps) 
       )}
     </ScrollView>
   );
+}
+
+function emptyMarketMessage(status: ConnectionStatus): string {
+  if (status === 'connecting' || status === 'reconnecting') {
+    return 'Connecting to live market data';
+  }
+  if (status === 'disconnected' || status === 'error') {
+    return 'No market data received yet';
+  }
+  return 'Waiting for market data';
 }
 
 function MarketDepth({ market }: { market: MarketState }) {

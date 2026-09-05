@@ -123,6 +123,21 @@ Test:
 
 ---
 
+# Resilience (mobile)
+
+Covered in store/session/screen tests:
+
+- REST metadata failure keeps previous pairs
+- Metadata loading flag
+- WebSocket disconnect does not clear markets
+- Favourite hydrate on session start
+- Retry control on metadata error
+- Stale-price hint while disconnected
+
+Binance disconnect is covered on the API feed tests, not by driving a live exchange.
+
+---
+
 # Integration Tests
 
 Where practical, verify:
