@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  ImageBackground,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import type { ConnectionStatus, MarketState, TradingPair } from '@pulse-crypto/contracts';
 import { colors, mono } from '../theme';
-import { selectMarket, useMarketStore } from '../state/market-store';
+import { useMarketStore } from '../state/market-store';
 import { StaleDataHint } from '../ui/StaleDataHint';
 import { useTickFlash } from '../ui/use-tick-flash';
 import { ConnectionBanner } from '../watchlist/ConnectionBanner';
@@ -31,12 +31,12 @@ interface MarketDetailsScreenProps {
 }
 
 export function MarketDetailsScreen({ pair, onBack }: MarketDetailsScreenProps) {
-  const market = useMarketStore(selectMarket(pair));
+  const market = useMarketStore((state) => state.markets[pair]);
   const connectionStatus = useMarketStore((state) => state.connectionStatus);
-  const displayName = useMarketStore(
-    (state) =>
-      state.pairs.find((item) => item.symbol === pair)?.displayName ?? pair,
-  );
+  const displayName =
+    useMarketStore(
+      (state) => state.pairs.find((item) => item.symbol === pair)?.displayName,
+    ) ?? pair;
   const tone = changeTone(market?.change24hPercent);
   const flash = useTickFlash(market?.lastPrice);
 
@@ -143,17 +143,18 @@ function MarketDepth({ market }: { market: MarketState }) {
   return (
     <View style={styles.depthCard}>
       <Text style={styles.section}>Market depth</Text>
-      <ImageBackground
-        source={depthShader}
-        style={styles.depthArt}
-        imageStyle={styles.depthImage}
-        resizeMode="cover"
-      >
+      <View style={styles.depthArt}>
+        <Image
+          source={depthShader}
+          style={styles.depthImageFill}
+          resizeMode="cover"
+          accessibilityIgnoresInvertColors
+        />
         <View style={styles.depthLegend}>
           <Text style={styles.depthBid}>Bids {formatQuantity(bidQty)}</Text>
           <Text style={styles.depthAsk}>Asks {formatQuantity(askQty)}</Text>
         </View>
-      </ImageBackground>
+      </View>
       <Text testID="details-pressure-bias" style={styles.pressureBias}>
         Pressure {pressure}
       </Text>
@@ -313,7 +314,8 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: colors.surfaceAlt,
   },
-  depthImage: {
+  depthImageFill: {
+    ...StyleSheet.absoluteFillObject,
     opacity: 0.85,
   },
   depthLegend: {

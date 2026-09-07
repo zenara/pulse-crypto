@@ -2,7 +2,7 @@ import React, { memo, useCallback } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { TradingPair } from '@pulse-crypto/contracts';
 import { colors, mono } from '../theme';
-import { selectMarket, useMarketStore } from '../state/market-store';
+import { useMarketStore } from '../state/market-store';
 import { useFavoritesStore } from '../state/favorites-store';
 import { useTickFlash } from '../ui/use-tick-flash';
 import { changeTone, formatChangePercent, formatPrice } from './format-market';
@@ -18,7 +18,7 @@ export const WatchlistRow = memo(function WatchlistRow({
   displayName,
   onSelectPair,
 }: WatchlistRowProps) {
-  const market = useMarketStore(selectMarket(symbol));
+  const market = useMarketStore((state) => state.markets[symbol]);
   const favorite = useFavoritesStore((state) =>
     state.favorites.includes(symbol),
   );

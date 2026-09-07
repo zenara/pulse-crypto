@@ -25,4 +25,16 @@ describe('useTickFlash', () => {
     });
     expect(result.current).toBeUndefined();
   });
+
+  it('does not flash on non-finite values', () => {
+    const { result, rerender } = renderHook(
+      ({ value }: { value: number | undefined }) => useTickFlash(value),
+      { initialProps: { value: 1 as number | undefined } },
+    );
+
+    rerender({ value: Number.NaN });
+    expect(result.current).toBeUndefined();
+    rerender({ value: Number.NaN });
+    expect(result.current).toBeUndefined();
+  });
 });

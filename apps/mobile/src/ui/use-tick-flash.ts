@@ -9,12 +9,21 @@ export function useTickFlash(
   useEffect(() => {
     const prior = previous.current;
     previous.current = value;
-    if (prior === undefined || value === undefined || prior === value) {
+    if (
+      prior === undefined ||
+      value === undefined ||
+      !Number.isFinite(prior) ||
+      !Number.isFinite(value) ||
+      prior === value
+    ) {
       return;
     }
 
-    setFlash(value > prior ? 'up' : 'down');
-    const timer = setTimeout(() => setFlash(undefined), 350);
+    const next = value > prior ? 'up' : 'down';
+    setFlash((current) => (current === next ? current : next));
+    const timer = setTimeout(() => {
+      setFlash((current) => (current === undefined ? current : undefined));
+    }, 350);
     return () => clearTimeout(timer);
   }, [value]);
 

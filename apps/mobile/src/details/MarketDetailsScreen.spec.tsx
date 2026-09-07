@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import type { MarketState, PairMetadata } from '@pulse-crypto/contracts';
 import { resetMarketStore, useMarketStore } from '../state/market-store';
 import { MarketDetailsScreen } from './MarketDetailsScreen';
@@ -77,6 +77,50 @@ describe('MarketDetailsScreen', () => {
     expect(getByTestId('details-empty')).toHaveTextContent(
       /Connecting to live market data/,
     );
+  });
+
+  it('accepts a stream of full-depth snapshots without throwing', () => {
+    const deep: MarketState = {
+      ...btc,
+      bids: Array.from({ length: 10 }, (_, index) => ({
+        price: 65000 - index,
+        quantity: 1 + index,
+      })),
+      asks: Array.from({ length: 10 }, (_, index) => ({
+        price: 65001 + index,
+        quantity: 1 + index,
+      })),
+    };
+    useMarketStore.getState().applySnapshot([deep]);
+
+    const { getByTestId } = render(
+      <MarketDetailsScreen pair="BTCUSDT" onBack={() => undefined} />,
+    );
+    expect(getByTestId('order-book')).toBeTruthy();
+    expect(getByTestId('bid-9-price')).toBeTruthy();
+
+    for (let tick = 1; tick <= 40; tick += 1) {
+      act(() => {
+        useMarketStore.getState().applySnapshot([
+          {
+            ...deep,
+            lastPrice: 65000.5 + tick,
+            bids: deep.bids.map((level, index) => ({
+              ...level,
+              quantity: level.quantity + tick * 0.01 + index,
+            })),
+            asks: deep.asks.map((level, index) => ({
+              ...level,
+              quantity: level.quantity + tick * 0.02 + index,
+            })),
+            updatedAt: tick,
+          },
+        ]);
+      });
+    }
+
+    expect(getByTestId('order-book')).toBeTruthy();
+    expect(getByTestId('details-price')).toBeTruthy();
   });
 
   it('invokes back', () => {

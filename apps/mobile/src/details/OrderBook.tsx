@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { StyleSheet, Text, View, type DimensionValue } from 'react-native';
 import type { OrderBookLevel } from '@pulse-crypto/contracts';
 import { colors, mono } from '../theme';
-import { useTickFlash } from '../ui/use-tick-flash';
 import { formatPrice, formatQuantity } from '../watchlist/format-market';
+
+const VISIBLE_DEPTH = 10;
 
 interface OrderBookProps {
   bids: readonly OrderBookLevel[];
@@ -11,18 +12,21 @@ interface OrderBookProps {
 }
 
 export function OrderBook({ bids, asks }: OrderBookProps) {
+  const visibleBids = useMemo(() => bids.slice(0, VISIBLE_DEPTH), [bids]);
+  const visibleAsks = useMemo(() => asks.slice(0, VISIBLE_DEPTH), [asks]);
+
   const maxQuantity = useMemo(() => {
     let max = 0;
-    for (const level of bids) {
+    for (const level of visibleBids) {
       max = Math.max(max, level.quantity);
     }
-    for (const level of asks) {
+    for (const level of visibleAsks) {
       max = Math.max(max, level.quantity);
     }
     return max || 1;
-  }, [bids, asks]);
+  }, [visibleBids, visibleAsks]);
 
-  if (bids.length === 0 && asks.length === 0) {
+  if (visibleBids.length === 0 && visibleAsks.length === 0) {
     return (
       <Text testID="order-book-empty" style={styles.empty}>
         No order-book levels yet
@@ -30,7 +34,7 @@ export function OrderBook({ bids, asks }: OrderBookProps) {
     );
   }
 
-  const rows = Math.max(bids.length, asks.length);
+  const rows = Math.max(visibleBids.length, visibleAsks.length);
 
   return (
     <View testID="order-book">
@@ -39,8 +43,8 @@ export function OrderBook({ bids, asks }: OrderBookProps) {
         <Text style={[styles.headerCell, styles.askHeader]}>Asks</Text>
       </View>
       {Array.from({ length: rows }, (_, index) => {
-        const bid = bids[index];
-        const ask = asks[index];
+        const bid = visibleBids[index];
+        const ask = visibleAsks[index];
         return (
           <View key={index} style={styles.level}>
             <BookSide
@@ -64,7 +68,7 @@ export function OrderBook({ bids, asks }: OrderBookProps) {
   );
 }
 
-function BookSide({
+const BookSide = memo(function BookSide({
   side,
   level,
   maxQuantity,
@@ -77,20 +81,13 @@ function BookSide({
   priceTestID: string;
   quantityTestID: string;
 }) {
-  const flash = useTickFlash(level?.quantity);
   const width: DimensionValue = level
-    ? `${Math.max(8, (level.quantity / maxQuantity) * 100)}%`
+    ? `${Math.max(8, Math.round((level.quantity / maxQuantity) * 100))}%`
     : 0;
   const isBid = side === 'bid';
 
   return (
-    <View
-      style={[
-        styles.side,
-        flash === 'up' && styles.flashUp,
-        flash === 'down' && styles.flashDown,
-      ]}
-    >
+    <View style={styles.side}>
       {level ? (
         <View
           style={[
@@ -114,7 +111,7 @@ function BookSide({
       </Text>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   empty: {
@@ -150,12 +147,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     paddingVertical: 5,
     paddingHorizontal: 6,
-  },
-  flashUp: {
-    backgroundColor: colors.secondaryDim,
-  },
-  flashDown: {
-    backgroundColor: colors.tertiaryDim,
   },
   depth: {
     position: 'absolute',
