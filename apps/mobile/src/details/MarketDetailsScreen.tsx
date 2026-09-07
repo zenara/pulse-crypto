@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceAlt,
   },
   depthImageFill: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.85,
   },
   depthLegend: {
