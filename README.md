@@ -145,7 +145,7 @@ Binance → BinanceFeedService → MarketProcessor → WebSocketGateway
 
 Connection pill means **phone ↔ this API**, not **API ↔ Binance**. If Binance is down but the mobile socket is up, the UI can still say connected while prices freeze. The API keeps serving the last in-memory snapshot until process restart.
 
-**Screen recording (about 30–45s):** watchlist ticking → search → star → details + book → kill API (stale hint) → restart API (reconnect). Still frames: [docs/presentation/SCREENSHOTS.md](docs/presentation/SCREENSHOTS.md).
+**Screen recording (about 30–45s):** watchlist ticking → search → star → details + book → kill API (stale hint) → restart API (reconnect). Still frames of the running app are in the architecture PDF.
 
 ---
 
