@@ -2,20 +2,25 @@
 
 ## Overview
 
-Cursor was used as an AI-assisted development tool throughout the implementation of PulseCrypto.
+Cursor (agent chat in the IDE) was used throughout PulseCrypto. It accelerated implementation and review. It did not own the architecture.
 
-AI was used primarily for:
+Used for:
 
-- Code scaffolding
-- Test generation
-- Refactoring suggestions
-- Code review
+- Nx / Nest / Expo scaffolding
+- Test generation (reviewed, not accepted blindly)
+- Refactors
+- Staff-style review prompts (slow consumers, disconnect-without-wipe, selector scope, details-view update depth)
 - Edge-case identification
-- Documentation assistance
-- Performance review
-- Architecture challenge
+- README and `docs/` drafting
+- Performance reasoning (no profiler run claimed)
 
-The architecture and major technical decisions were reviewed and validated by the developer.
+Not used for:
+
+- Inventing Binance combined-stream or ticker/depth behaviour
+- Introducing Kafka, Redis, Socket.IO, or a database “because it is typical”
+- Replacing ADRs with generated design
+
+The developer remains responsible for architecture, correctness, and failure paths. The repository README summarises this for the assignment.
 
 ---
 
